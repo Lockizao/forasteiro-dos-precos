@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #faf8f4;
+  --surface: #ffffff;
+  --border: #e7e2d6;
+  --text: #211d17;
+  --text-muted: #746c5e;
+  --accent: #0d7a5f;
+  --accent-soft: #e3f2ec;
+  --accent-strong: #0a5f4a;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Public Sans", "Segoe UI", sans-serif;
+}
+
+.font-display {
+  font-family: "Fraunces", Georgia, serif;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
