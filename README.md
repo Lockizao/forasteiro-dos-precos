@@ -1,58 +1,54 @@
-# 🤠 Forasteiro dos Preços
+# Forasteiro dos Preços
 
-Chegou na cidade, rastreou as lojas, achou quem cobra menos. Busca um produto e mostra os preços em várias lojas brasileiras, em tempo real, ordenados do mais barato pro mais caro — sem cadastro, sem esperar dias por aprovação de API de loja.
+Comparador de preços que busca o mesmo produto em várias lojas brasileiras ao mesmo tempo e mostra quem cobra menos. Sem cadastro, sem precisar esperar aprovação de parceria com nenhuma loja.
 
-## 🛠️ Tecnologias
+## Tecnologias
 
-| Categoria | Tecnologia |
-|---|---|
-| Front-End | Next.js 16 (App Router), React, TypeScript, Tailwind CSS |
-| Back-End | Next.js API Route (Node.js) |
-| Dados | [SerpApi](https://serpapi.com) (Google Shopping, resultados do Brasil) |
+- Next.js 16 (App Router), React, TypeScript, Tailwind CSS
+- API Route do próprio Next.js como back-end
+- SerpApi (Google Shopping) como fonte dos preços
 
-## 🗺️ Como funciona
+## Como funciona
 
-1. O front-end (`src/app/page.tsx`) manda o termo de busca pra `src/app/api/search/route.ts`.
-2. A API consulta o SerpApi, mantendo a chave secreta no servidor, com cache de 1h (`next: { revalidate }`) e retry automático se der erro transitório.
-3. Filtra o que não é o produto certo:
-   - **Relevância**: exige que todas as palavras da busca apareçam no título (corta "iPhone 16" numa busca de "iPhone 15", por exemplo — o Google Shopping amplia pra "produtos parecidos" e a gente restringe de volta).
-   - **Acessórios**: corta títulos no padrão "Capa para iPhone 15" ou que começam com peça/acessório ("Frontal iPhone 15...").
-4. Detecta **usado vs novo** (campo `second_hand_condition` da API quando existe, ou palavras-chave no título tipo "seminovo"/"vitrine"/"recondicionado").
-5. Marca **lojas verificadas** com um selo ✓ — curadoria manual de redes grandes/estabelecidas (Amazon, Magalu, Carrefour, etc.), não é um selo oficial de ninguém.
-6. Ordena por preço e destaca o mais barato.
+O front-end manda o termo de busca pra `src/app/api/search/route.ts`, que consulta o SerpApi mantendo a chave no servidor. A resposta fica em cache por 6 horas e a API tenta de novo automaticamente se der algum erro passageiro.
 
-## ⚠️ Por que não usa a API do Mercado Livre direto?
+Antes de devolver os resultados, o back-end filtra duas coisas que estavam atrapalhando:
 
-Testei primeiro — o Mercado Livre fechou o acesso a busca/catálogo pra apps de terceiros (mesmo com app registrado e token válido, todo endpoint de produto retorna 403 bloqueado por política deles). O SerpApi contorna isso de forma legítima, consultando o Google Shopping (que já agrega várias lojas) em vez de fazer scraping direto nos sites.
+- Relevância: exige que todas as palavras da busca apareçam no título do produto. Sem isso, buscar "iPhone 15" trazia junto iPhone 16 e até iPhone 18, porque o Google Shopping amplia a busca pra "produtos parecidos".
+- Acessórios: corta título no formato "Capa para iPhone 15" ou que já começa com o nome de uma peça, tipo "Frontal iPhone 15".
 
-## ⚙️ Rodando localmente
+Também marca se o produto é usado (pelo campo que a própria API às vezes devolve, ou por palavras como "seminovo" e "vitrine" no título) e se a loja é uma rede grande e conhecida — isso último é uma lista que eu mantenho manualmente, não é um selo oficial de ninguém.
 
-### Pré-requisitos
-- Node.js e npm
-- Uma chave do [SerpApi](https://serpapi.com/users/sign_up) (100 buscas grátis por mês)
+## Por que não usei a API do Mercado Livre direto
 
-### Instalação
+Foi minha primeira tentativa, na verdade. Cadastrei um app lá, gerei token, testei os endpoints de busca e catálogo — e todos voltavam bloqueados com 403, mesmo com tudo configurado certo. Parece que fecharam esse acesso pra quem não é parceiro deles. Acabei indo pro SerpApi, que consulta o Google Shopping (e esse já agrega várias lojas) em vez de depender de acesso direto a uma única plataforma.
+
+## Rodando localmente
+
+Precisa de Node.js, npm, e uma chave do SerpApi (o plano grátis dá 100 buscas por mês, e você consegue uma em serpapi.com).
+
 ```bash
 npm install
 ```
 
-### Configuração
-Copie `.env.local.example` para `.env.local` e preencha:
-```env
+Copie o `.env.local.example` para `.env.local` e coloque sua chave:
+
+```
 SERPAPI_KEY=sua_chave_aqui
 ```
 
-### Iniciar
+Depois só rodar:
+
 ```bash
 npm run dev
 ```
-🌐 Acesse http://localhost:3000
 
-## 🔑 API
+E acessar localhost:3000.
 
-`GET /api/search?q=iphone+15`
+## API
 
-Resposta:
+`GET /api/search?q=iphone+15` devolve algo assim:
+
 ```json
 {
   "busca": "iphone 15",
@@ -74,4 +70,4 @@ Resposta:
 }
 ```
 
-⚠️ A primeira busca de cada termo pode levar até ~30s (às vezes mais — o SerpApi já retornou 503 em picos de instabilidade; a API tenta de novo automaticamente). Buscas repetidas do mesmo termo são cacheadas (pelo SerpApi e por nós) e voltam em segundos.
+Um aviso honesto: a primeira busca de um termo novo pode demorar, às vezes até 30 segundos ou mais, porque depende do tempo que o SerpApi leva pra raspar o Google Shopping do lado deles. Já vi cair em erro 503 em horário de pico. Busca repetida do mesmo termo volta na hora porque fica em cache.
