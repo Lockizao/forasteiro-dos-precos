@@ -1,8 +1,17 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import Image from "next/image";
 import type { Resultado } from "./api/search/route";
+
+// Mensagens que mudam conforme o tempo passa — pra deixar claro que tá funcionando
+// de verdade (não travado), mesmo quando a busca demora.
+function mensagemDeEspera(segundos: number): string {
+    if (segundos < 5) return "Sacando a arma... isso costuma ser rápido.";
+    if (segundos < 15) return "Rastreando pelas lojas da cidade...";
+    if (segundos < 30) return "Ainda procurando — às vezes o forasteiro cavalga mais longe.";
+    return "Tá osso hoje. Aguenta mais um pouco, quase lá.";
+}
 
 interface RespostaBusca {
     busca: string;
@@ -37,11 +46,24 @@ export default function Home() {
     const [carregando, setCarregando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
     const [resposta, setResposta] = useState<RespostaBusca | null>(null);
+    const [segundosEspera, setSegundosEspera] = useState(0);
+
+    useEffect(() => {
+        if (!carregando) return;
+
+        const inicio = Date.now();
+        const intervalo = setInterval(() => {
+            setSegundosEspera(Math.floor((Date.now() - inicio) / 1000));
+        }, 1000);
+
+        return () => clearInterval(intervalo);
+    }, [carregando]);
 
     async function buscar(e: FormEvent) {
         e.preventDefault();
         if (!termo.trim()) return;
 
+        setSegundosEspera(0);
         setCarregando(true);
         setErro(null);
         setResposta(null);
@@ -109,10 +131,16 @@ export default function Home() {
                 )}
 
                 {carregando && (
-                    <p className="text-[var(--text-muted)] text-sm">
-                        Rastreando os preços pela cidade — a primeira busca de um termo pode levar até 30s
-                        (às vezes mais), buscas repetidas voltam na hora.
-                    </p>
+                    <div className="flex items-center gap-3 text-[var(--text-muted)] text-sm mb-2">
+                        <span
+                            className="inline-block w-4 h-4 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin shrink-0"
+                            aria-hidden="true"
+                        />
+                        <p>
+                            {mensagemDeEspera(segundosEspera)}{" "}
+                            <span className="tabular text-[var(--text)]">({segundosEspera}s)</span>
+                        </p>
+                    </div>
                 )}
 
                 {resposta && resultados.length === 0 && !erro && (

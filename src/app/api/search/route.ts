@@ -114,9 +114,11 @@ export const maxDuration = 60;
 async function buscarNoSerpApi(url: string, tentativa = 1): Promise<{ dados?: unknown; erro?: string }> {
     try {
         const resposta = await fetch(url, {
-            // Cache de verdade: se alguém já buscou "iphone 15" na última hora,
-            // todo mundo recebe a resposta na hora, sem gastar cota do SerpApi de novo.
-            next: { revalidate: 3600 },
+            // Cache de verdade: se alguém já buscou "iphone 15" nas últimas 6h,
+            // todo mundo recebe a resposta na hora, sem gastar cota do SerpApi de novo
+            // nem cair no caminho lento/instável. Preço não muda tão rápido a ponto de
+            // precisar ser mais fresco que isso pra esse tipo de uso.
+            next: { revalidate: 21600 },
         });
         const dados = await resposta.json();
 
