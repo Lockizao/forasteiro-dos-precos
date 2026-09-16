@@ -1,8 +1,8 @@
 {
-  "name": "comparador-precos",
+  "name": "forasteiro-dos-precos",
   "private": true,
-  "version": "1.0.0",
-  "description": "Comparador de preços em tempo real, consultando o Google Shopping via SerpApi.",
+  "version": "1.1.0",
+  "description": "Forasteiro dos Preços — comparador de preços em tempo real, consultando o Google Shopping via SerpApi.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

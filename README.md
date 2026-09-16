@@ -1,6 +1,6 @@
-# 🔎 Comparador de Preços
+# 🤠 Forasteiro dos Preços
 
-Busca um produto e mostra os preços em várias lojas brasileiras, em tempo real, ordenados do mais barato pro mais caro — sem cadastro, sem esperar dias por aprovação de API de loja.
+Chegou na cidade, rastreou as lojas, achou quem cobra menos. Busca um produto e mostra os preços em várias lojas brasileiras, em tempo real, ordenados do mais barato pro mais caro — sem cadastro, sem esperar dias por aprovação de API de loja.
 
 ## 🛠️ Tecnologias
 
@@ -13,9 +13,13 @@ Busca um produto e mostra os preços em várias lojas brasileiras, em tempo real
 ## 🗺️ Como funciona
 
 1. O front-end (`src/app/page.tsx`) manda o termo de busca pra `src/app/api/search/route.ts`.
-2. A API consulta o SerpApi (que por sua vez consulta o Google Shopping), mantendo a chave secreta no servidor.
-3. Filtra só resultados com preço numérico, ordena do mais barato pro mais caro, e devolve loja, preço, avaliação e link direto pro produto.
-4. O front-end destaca o mais barato e mostra a diferença de preço entre o mais barato e o mais caro.
+2. A API consulta o SerpApi, mantendo a chave secreta no servidor, com cache de 1h (`next: { revalidate }`) e retry automático se der erro transitório.
+3. Filtra o que não é o produto certo:
+   - **Relevância**: exige que todas as palavras da busca apareçam no título (corta "iPhone 16" numa busca de "iPhone 15", por exemplo — o Google Shopping amplia pra "produtos parecidos" e a gente restringe de volta).
+   - **Acessórios**: corta títulos no padrão "Capa para iPhone 15" ou que começam com peça/acessório ("Frontal iPhone 15...").
+4. Detecta **usado vs novo** (campo `second_hand_condition` da API quando existe, ou palavras-chave no título tipo "seminovo"/"vitrine"/"recondicionado").
+5. Marca **lojas verificadas** com um selo ✓ — curadoria manual de redes grandes/estabelecidas (Amazon, Magalu, Carrefour, etc.), não é um selo oficial de ninguém.
+6. Ordena por preço e destaca o mais barato.
 
 ## ⚠️ Por que não usa a API do Mercado Livre direto?
 
@@ -52,11 +56,22 @@ Resposta:
 ```json
 {
   "busca": "iphone 15",
-  "total": 28,
+  "total": 23,
   "resultados": [
-    { "titulo": "...", "loja": "Amazon.com.br", "preco": 3742.99, "precoFormatado": "R$ 3.742,99", "avaliacao": 4.7, "numeroAvaliacoes": 24000, "imagem": "...", "link": "..." }
+    {
+      "titulo": "...",
+      "loja": "Amazon.com.br - Seller",
+      "lojaVerificada": true,
+      "condicao": "usado",
+      "preco": 3742.99,
+      "precoFormatado": "R$ 3.742,99",
+      "avaliacao": 4.7,
+      "numeroAvaliacoes": 24000,
+      "imagem": "...",
+      "link": "..."
+    }
   ]
 }
 ```
 
-⚠️ A primeira busca de cada termo pode levar até ~30s (tempo do SerpApi consultando o Google). Buscas repetidas do mesmo termo são cacheadas e voltam em segundos.
+⚠️ A primeira busca de cada termo pode levar até ~30s (às vezes mais — o SerpApi já retornou 503 em picos de instabilidade; a API tenta de novo automaticamente). Buscas repetidas do mesmo termo são cacheadas (pelo SerpApi e por nós) e voltam em segundos.

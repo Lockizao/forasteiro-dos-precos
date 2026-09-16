@@ -1,24 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #faf8f4;
-  --surface: #ffffff;
-  --border: #e7e2d6;
-  --text: #211d17;
-  --text-muted: #746c5e;
-  --accent: #0d7a5f;
-  --accent-soft: #e3f2ec;
-  --accent-strong: #0a5f4a;
+  --bg: #f2e6cd;
+  --bg-texture: #ece0c4;
+  --surface: #fff9ec;
+  --border: #d8c49a;
+  --border-strong: #b9975f;
+  --text: #3a2a18;
+  --text-muted: #7a6547;
+
+  --accent: #a4321e;
+  --accent-soft: #f3ddd3;
+  --accent-strong: #822417;
+
+  --verified: #8a6a1f;
+  --verified-soft: #f1e6c8;
+
+  --used: #6b5a42;
+  --used-soft: #e9dfcb;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: "Public Sans", "Segoe UI", sans-serif;
+  font-family: "Barlow", "Segoe UI", sans-serif;
+  background-image: radial-gradient(circle at 1px 1px, var(--bg-texture) 1px, transparent 0);
+  background-size: 22px 22px;
 }
 
 .font-display {
-  font-family: "Fraunces", Georgia, serif;
+  font-family: "Rye", Georgia, serif;
+}
+
+.font-label {
+  font-family: "Barlow Condensed", "Segoe UI", sans-serif;
+  letter-spacing: 0.04em;
 }
 
 .tabular {
